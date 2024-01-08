@@ -50,4 +50,8 @@ public class AppUserController {
         appUserService.updateAppUserDetails(appUserId,request);
         return MakingResponse.makingResponse(new SimpleResponseRest());
     }
+    @GetMapping("/details")
+    public ResponseEntity<SimpleResponseRest> getAppUserDetails(@RequestParam(name = "appUserId") String appUserId){
+        return MakingResponse.makingResponse(appUserService.getUserDetails(appUserId));
+    }
 }

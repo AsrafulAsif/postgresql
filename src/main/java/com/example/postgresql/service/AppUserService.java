@@ -9,6 +9,9 @@ import com.example.postgresql.request.AppUserRequestRest;
 import com.example.postgresql.entity.AppUser;
 import com.example.postgresql.request.UpdateAppUserDetails;
 import com.example.postgresql.request.UpdatePasswordRequest;
+import com.example.postgresql.response.AppUserDetailsResponse;
+import com.example.postgresql.response.rest.AppUserDetailsResponseRest;
+import com.example.postgresql.util.ConvertingClass;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -72,5 +75,14 @@ public class AppUserService {
         appUserDetails.setEmail(request.getEmail() == null ? appUserDetails.getEmail():request.getEmail());
         appUserDetails.setAddress(request.getAddress() == null ? appUserDetails.getAddress(): request.getAddress());
         appUserDetailsRepository.save(appUserDetails);
+    }
+
+    public AppUserDetailsResponseRest getUserDetails(String appUserId){
+        AppUserDetailsResponseRest response = new AppUserDetailsResponseRest();
+        AppUserDetails appUserDetails = appUserDetailsRepository.findByAppUser_Id(Long.valueOf(appUserId));
+        AppUserDetailsResponse appUserDetailsResponse =
+                ConvertingClass.convertClass(appUserDetails,AppUserDetailsResponse.class);
+        response.setAppUserDetails(appUserDetailsResponse);
+        return response;
     }
 }
