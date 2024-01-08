@@ -25,4 +25,6 @@ public class AppUser {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "appUser")
+    private AppUserDetails appUserDetails;
 }

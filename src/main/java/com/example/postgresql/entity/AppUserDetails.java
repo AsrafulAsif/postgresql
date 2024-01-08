@@ -1,10 +1,13 @@
 package com.example.postgresql.entity;
 
+import com.example.postgresql.enums.Gender;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 @Data
 @Builder
@@ -12,8 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_details")
-public class UserDetails {
-    public enum Gender{MALE,FEMALE}
+public class AppUserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_details_id")
@@ -26,6 +28,21 @@ public class UserDetails {
     private String mobileNumber;
 
     @Column(name = "gender")
-    private Gender gender;
+    private String gender;
 
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private AppUser appUser;
 }
