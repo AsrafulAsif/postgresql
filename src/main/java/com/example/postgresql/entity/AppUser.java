@@ -1,5 +1,6 @@
 package com.example.postgresql.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class AppUser {
     private Long id;
     @Column(name = "user_name")
     private String userName;
+    @JsonIgnore
     @Column(name = "user_password")
     private String userPassword;
     @Column(name = "created_at")

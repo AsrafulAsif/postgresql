@@ -1,9 +1,6 @@
 package com.example.postgresql.controller;
 
-import com.example.postgresql.request.AddAppUserDetails;
-import com.example.postgresql.request.AppUserRequestRest;
-import com.example.postgresql.request.UpdateAppUserDetails;
-import com.example.postgresql.request.UpdatePasswordRequest;
+import com.example.postgresql.request.*;
 import com.example.postgresql.response.SimpleResponseRest;
 import com.example.postgresql.service.AppUserService;
 import com.example.postgresql.util.MakingResponse;
@@ -53,5 +50,12 @@ public class AppUserController {
     @GetMapping("/details")
     public ResponseEntity<SimpleResponseRest> getAppUserDetails(@RequestParam(name = "appUserId") String appUserId){
         return MakingResponse.makingResponse(appUserService.getUserDetails(appUserId));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<SimpleResponseRest>login(
+            @RequestBody AppUserLogInRequest request
+    ){
+        return MakingResponse.makingResponse(appUserService.login(request));
     }
 }

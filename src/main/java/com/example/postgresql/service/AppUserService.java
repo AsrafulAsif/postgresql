@@ -1,19 +1,22 @@
 package com.example.postgresql.service;
 
 import com.example.postgresql.entity.AppUserDetails;
+import com.example.postgresql.exception.AccessForbiddenException;
 import com.example.postgresql.exception.BadRequestException;
+import com.example.postgresql.model.TokenClaim;
 import com.example.postgresql.repository.AppUserDetailsRepository;
 import com.example.postgresql.repository.AppUserRepository;
-import com.example.postgresql.request.AddAppUserDetails;
-import com.example.postgresql.request.AppUserRequestRest;
+import com.example.postgresql.request.*;
 import com.example.postgresql.entity.AppUser;
-import com.example.postgresql.request.UpdateAppUserDetails;
-import com.example.postgresql.request.UpdatePasswordRequest;
 import com.example.postgresql.response.AppUserDetailsResponse;
+import com.example.postgresql.response.AppUserLoginResponse;
 import com.example.postgresql.response.rest.AppUserDetailsResponseRest;
+import com.example.postgresql.response.rest.AppUserLoginResponseRest;
 import com.example.postgresql.util.ConvertingClass;
+import com.jwt.token.generator.JwtTokenGenerator;
 import org.springframework.stereotype.Service;
 
+import javax.security.sasl.AuthenticationException;
 import java.util.Date;
 import java.util.Optional;
 
@@ -21,6 +24,12 @@ import java.util.Optional;
 public class AppUserService {
     private final AppUserRepository appUserRepository;
     private final AppUserDetailsRepository appUserDetailsRepository;
+
+    private final JwtTokenGenerator jwtTokenGenerator = new JwtTokenGenerator(
+            "MFswDQYJKoZAsifNAQEBBQADSgAwRwJAYegWAsifKMJ/Cs0awq2NQOx4KuAsif",
+            2592000000L
+    );
+
 
     public AppUserService(AppUserRepository appUserRepository, AppUserDetailsRepository appUserDetailsRepository) {
         this.appUserRepository = appUserRepository;
@@ -83,6 +92,23 @@ public class AppUserService {
         AppUserDetailsResponse appUserDetailsResponse =
                 ConvertingClass.convertClass(appUserDetails,AppUserDetailsResponse.class);
         response.setAppUserDetails(appUserDetailsResponse);
+        return response;
+    }
+
+    public AppUserLoginResponseRest login(AppUserLogInRequest request){
+        AppUserLoginResponseRest response  = new AppUserLoginResponseRest();
+        AppUser appUser = appUserRepository.findByUserName(request.getUserName());
+        if (appUser == null) throw new BadRequestException("User not found");
+        if (!request.getUserPassword().equals(appUser.getUserPassword())) throw new AccessForbiddenException("Password mismatch.");
+        TokenClaim tokenClaim = TokenClaim.builder()
+                .userName(appUser.getUserName())
+                .mobileName(appUser.getAppUserDetails().getMobileNumber())
+                .gender(appUser.getAppUserDetails().getGender())
+                .build();
+        String token = jwtTokenGenerator.generateJwtTokenWithInfo(appUser.getUserName(),appUser.getId().toString(),tokenClaim);
+        AppUserLoginResponse appUserLoginResponse = new AppUserLoginResponse();
+        appUserLoginResponse.setToken(token);
+        response.setTokenData(appUserLoginResponse);
         return response;
     }
 }
