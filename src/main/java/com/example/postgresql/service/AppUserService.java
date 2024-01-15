@@ -14,9 +14,10 @@ import com.example.postgresql.response.rest.AppUserDetailsResponseRest;
 import com.example.postgresql.response.rest.AppUserLoginResponseRest;
 import com.example.postgresql.util.ConvertingClass;
 import com.jwt.token.generator.JwtTokenGenerator;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
-import javax.security.sasl.AuthenticationException;
 import java.util.Date;
 import java.util.Optional;
 
@@ -25,15 +26,12 @@ public class AppUserService {
     private final AppUserRepository appUserRepository;
     private final AppUserDetailsRepository appUserDetailsRepository;
 
-    private final JwtTokenGenerator jwtTokenGenerator = new JwtTokenGenerator(
-            "MFswDQYJKoZAsifNAQEBBQADSgAwRwJAYegWAsifKMJ/Cs0awq2NQOx4KuAsif",
-            2592000000L
-    );
+    private final JwtTokenGenerator jwtTokenGenerator;
 
-
-    public AppUserService(AppUserRepository appUserRepository, AppUserDetailsRepository appUserDetailsRepository) {
+    public AppUserService(AppUserRepository appUserRepository, AppUserDetailsRepository appUserDetailsRepository, JwtTokenGenerator jwtTokenGenerator) {
         this.appUserRepository = appUserRepository;
         this.appUserDetailsRepository = appUserDetailsRepository;
+        this.jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public void addAppUser(AppUserRequestRest request){
