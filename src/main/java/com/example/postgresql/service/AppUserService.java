@@ -10,12 +10,19 @@ import com.example.postgresql.request.*;
 import com.example.postgresql.entity.AppUser;
 import com.example.postgresql.response.AppUserDetailsResponse;
 import com.example.postgresql.response.AppUserLoginResponse;
+import com.example.postgresql.response.rest.AppUserDetailsInternalResponse;
 import com.example.postgresql.response.rest.AppUserDetailsResponseRest;
 import com.example.postgresql.response.rest.AppUserLoginResponseRest;
 import com.example.postgresql.util.ConvertingClass;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.jwt.token.generator.JwtTokenGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -28,10 +35,31 @@ public class AppUserService {
 
     private final JwtTokenGenerator jwtTokenGenerator;
 
-    public AppUserService(AppUserRepository appUserRepository, AppUserDetailsRepository appUserDetailsRepository, JwtTokenGenerator jwtTokenGenerator) {
+    private final JdbcTemplate jdbcTemplate;
+
+
+    RowMapper<AppUserDetails> rowMapper = ((rs, rowNum) -> new AppUserDetails(
+            rs.getLong("user_details_id"),
+            rs.getString("user_full_name"),
+            rs.getString("mobile_number"),
+            rs.getString("gender"),
+            rs.getString("email"),
+            rs.getString("address"),
+            rs.getDate("created_at"),
+            rs.getDate("updated_at"),
+            (AppUser) rs.getObject("user_id")
+
+    ));
+
+
+    @Value("${aes-key}")
+    private String secretKey;
+
+    public AppUserService(AppUserRepository appUserRepository, AppUserDetailsRepository appUserDetailsRepository, JwtTokenGenerator jwtTokenGenerator, JdbcTemplate jdbcTemplate) {
         this.appUserRepository = appUserRepository;
         this.appUserDetailsRepository = appUserDetailsRepository;
         this.jwtTokenGenerator = jwtTokenGenerator;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public void addAppUser(AppUserRequestRest request){
@@ -107,6 +135,59 @@ public class AppUserService {
         AppUserLoginResponse appUserLoginResponse = new AppUserLoginResponse();
         appUserLoginResponse.setToken(token);
         response.setTokenData(appUserLoginResponse);
+        return response;
+    }
+
+    public AppUserDetailsInternalResponse getUserDetailsInternal(String appUserId){
+        String data;
+        String json;
+        AppUserDetailsInternalResponse response = new AppUserDetailsInternalResponse();
+        AppUserDetails appUserDetails = appUserDetailsRepository.findByAppUser_Id(Long.valueOf(appUserId));
+        if (appUserDetails==null) throw new BadRequestException("User details not found.");
+        AppUserDetailsResponse appUserDetailsResponse =
+                ConvertingClass.convertClass(appUserDetails,AppUserDetailsResponse.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            json = objectMapper.writeValueAsString(appUserDetailsResponse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            data = AESEncryptionService.encryptJson(json,secretKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        response.setData(data);
+        return response;
+    }
+
+    public AppUserDetailsResponseRest getAppUserDetailsInternalDecrypt(String decryptString ){
+        AppUserDetailsResponse receivedObject;
+        AppUserDetailsResponseRest response = new AppUserDetailsResponseRest();
+        String decryptedObject;
+        try {
+            decryptedObject = AESEncryptionService.decryptJson(decryptString,secretKey );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+          receivedObject = objectMapper.readValue(decryptedObject, AppUserDetailsResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        response.setAppUserDetails(receivedObject);
+        return response;
+    }
+
+    public AppUserDetailsResponseRest getAppUserDetailsJDBC(String appUserId){
+        AppUserDetailsResponseRest response = new AppUserDetailsResponseRest();
+        String sql = "select * from user_details where user_id = ?";
+        AppUserDetails appUserDetails = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(AppUserDetails.class),Long.valueOf(appUserId));
+
+        AppUserDetailsResponse appUserDetailsResponse =
+                ConvertingClass.convertClass(appUserDetails,AppUserDetailsResponse.class);
+        response.setAppUserDetails(appUserDetailsResponse);
         return response;
     }
 }

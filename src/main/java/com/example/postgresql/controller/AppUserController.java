@@ -58,4 +58,19 @@ public class AppUserController {
     ){
         return MakingResponse.makingResponse(appUserService.login(request));
     }
+    @GetMapping("/details/internal")
+    public ResponseEntity<SimpleResponseRest> getAppUserDetailsInternal(@RequestParam(name = "appUserId") String appUserId){
+        return MakingResponse.makingResponse(appUserService.getUserDetailsInternal(appUserId));
+    }
+
+
+    @GetMapping("/decrypt/internal")
+    public ResponseEntity<SimpleResponseRest> getAppUserDetailsInternalDecrypt(@RequestParam(name = "decrypt-string") String decryptString){
+        return MakingResponse.makingResponse(appUserService.getAppUserDetailsInternalDecrypt(decryptString));
+    }
+
+    @GetMapping("/JDBC")
+    public ResponseEntity<SimpleResponseRest> getAppUserDetailsJDBC(@RequestParam(name = "appUserId") String appUserId){
+        return MakingResponse.makingResponse(appUserService.getAppUserDetailsJDBC(appUserId));
+    }
 }

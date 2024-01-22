@@ -107,4 +107,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<SimpleResponseRest> handleSQLException(SQLException e) {
         return new ResponseEntity<>(new SimpleResponseRest(e.getMessage().trim(), HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    public ResponseEntity<SimpleResponseRest> handleRunTimeException(SQLException e) {
+        return new ResponseEntity<>(new SimpleResponseRest(e.getMessage().trim(), HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
